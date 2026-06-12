@@ -1,226 +1,744 @@
 <!DOCTYPE html>
-<html class="staticrypt-html">
-    <head>
-        <meta charset="utf-8" />
-        <title>Nonaka Notes</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+<html lang="ja" class="staticrypt-html">
+<head>
+<meta charset="utf-8" />
+<title>秘 · Private Notes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta http-equiv="cache-control" content="no-cache" />
+<meta http-equiv="expires" content="0" />
+<meta http-equiv="pragma" content="no-cache" />
 
-        <!-- do not cache this page -->
-        <meta http-equiv="cache-control" content="max-age=0" />
-        <meta http-equiv="cache-control" content="no-cache" />
-        <meta http-equiv="expires" content="0" />
-        <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
-        <meta http-equiv="pragma" content="no-cache" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
-        <style>
-            .staticrypt-hr {
-                margin-top: 20px;
-                margin-bottom: 20px;
-                border: 0;
-                border-top: 1px solid #eee;
-            }
+<style>
+  :root {
+    --paper: #F1EBD7;          /* 生成り */
+    --paper-deep: #E8E0C7;
+    --ink: #1A1A1E;            /* 墨 */
+    --ink-dim: #4A4641;
+    --ink-faint: rgba(26, 26, 30, 0.38);
+    --ink-ghost: rgba(26, 26, 30, 0.16);
+    --hairline: rgba(26, 26, 30, 0.20);
+    --grid-line: rgba(26, 26, 30, 0.055);
+    --vermillion: #B83A2A;     /* 朱 */
+    --vermillion-deep: #8A2618;
+    --vermillion-soft: rgba(184, 58, 42, 0.85);
+  }
 
-            .staticrypt-page {
-                width: 360px;
-                padding: 8% 0 0;
-                margin: auto;
-                box-sizing: border-box;
-            }
+  * { box-sizing: border-box; }
 
-            .staticrypt-form {
-                position: relative;
-                z-index: 1;
-                background: #ffffff;
-                max-width: 360px;
-                margin: 0 auto 100px;
-                padding: 45px;
-                text-align: center;
-                box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);
-            }
+  html.staticrypt-html, body.staticrypt-body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--paper);
+    color: var(--ink);
+  }
 
-            .staticrypt-form input[type="password"],
-            input[type="text"] {
-                background: inherit;
-                border: 0;
-                box-sizing: border-box; /* This ensures padding is included in the total width */
-                font-size: 14px;
-                outline: 0;
-                padding: 15px 30px 15px 15px; /* Adjust the padding to ensure there is space for the icon */
-                width: 100%;
-            }
+  body.staticrypt-body {
+    font-family: "Inter", "Hiragino Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
 
-            .staticrypt-password-container {
-                position: relative;
-                outline: 0;
-                background: #f2f2f2;
-                width: 100%;
-                border: 0;
-                margin: 0 0 15px;
-                box-sizing: border-box;
-            }
+  /* 紙のテクスチャ + 原稿用紙の升目 */
+  body.staticrypt-body::before {
+    content: ""; position: fixed; inset: 0;
+    pointer-events: none; z-index: 1;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 36px 36px;
+    background-position: 0 0;
+    opacity: 0.85;
+  }
+  body.staticrypt-body::after {
+    content: ""; position: fixed; inset: 0;
+    pointer-events: none; z-index: 2;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10  0 0 0 0 0.10  0 0 0 0 0.12  0 0 0 0.05 0'/></filter><rect width='260' height='260' filter='url(%23n)'/></svg>");
+    opacity: 0.55;
+    mix-blend-mode: multiply;
+  }
 
-            .staticrypt-toggle-password-visibility {
-                cursor: pointer;
-                height: 20px;
-                opacity: 60%;
-                padding: 13px;
-                position: absolute;
-                right: 0;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 20px;
-            }
+  #staticrypt_content.staticrypt-content {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    position: relative;
+    background: transparent;
+    font-family: inherit;
+  }
 
-            .staticrypt-form .staticrypt-decrypt-button {
-                text-transform: uppercase;
-                outline: 0;
-                background: #4CAF50;
-                width: 100%;
-                border: 0;
-                padding: 15px;
-                color: #ffffff;
-                font-size: 14px;
-                cursor: pointer;
-            }
+  /* 上端バー */
+  .nn-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 36px;
+    font-family: "Inter", sans-serif;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.34em;
+    color: var(--ink-dim);
+    position: relative;
+    z-index: 5;
+    text-transform: uppercase;
+  }
+  .nn-top > span {
+    opacity: 0;
+    animation: nn-fade 0.8s 0.7s ease both;
+  }
+  .nn-top::after {
+    content: ""; position: absolute;
+    left: 50%; right: 50%; bottom: 0;
+    height: 1px; background: var(--hairline);
+    animation: nn-line-x 1.1s 0.15s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @keyframes nn-line-x {
+    from { left: 50%; right: 50%; }
+    to   { left: 36px; right: 36px; }
+  }
+  @keyframes nn-line-x-m {
+    from { left: 50%; right: 50%; }
+    to   { left: 20px; right: 20px; }
+  }
+  @keyframes nn-fade {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+  .nn-top .nn-mark {
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 700;
+    color: var(--vermillion);
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: none;
+  }
 
-            .staticrypt-form .staticrypt-decrypt-button:hover,
-            .staticrypt-form .staticrypt-decrypt-button:active,
-            .staticrypt-form .staticrypt-decrypt-button:focus {
-                background: #4CAF50;
-                filter: brightness(92%);
-            }
+  /* 下端バー */
+  .nn-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 36px;
+    font-family: "Inter", sans-serif;
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.38em;
+    color: var(--ink-faint);
+    position: relative;
+    z-index: 5;
+    text-transform: uppercase;
+  }
+  .nn-bottom > span {
+    opacity: 0;
+    animation: nn-fade 0.8s 0.7s ease both;
+  }
+  .nn-bottom::before {
+    content: ""; position: absolute;
+    left: 50%; right: 50%; top: 0;
+    height: 1px; background: var(--hairline);
+    animation: nn-line-x 1.1s 0.15s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
 
-            .staticrypt-html {
-                height: 100%;
-            }
+  /* 左マージン 縦書き「私／録」 */
+  .nn-side-l {
+    position: fixed;
+    left: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    writing-mode: vertical-rl;
+    -webkit-writing-mode: vertical-rl;
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.6em;
+    color: var(--ink-ghost);
+    z-index: 4;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0;
+    animation: nn-side-in 1.2s 2.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .nn-side-l .nn-bar {
+    display: inline-block;
+    width: 1px; height: 26px;
+    background: var(--ink-ghost);
+    margin-bottom: 14px;
+  }
+  /* 右マージン 縦書き「合言葉」 */
+  .nn-side-r {
+    position: fixed;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    writing-mode: vertical-rl;
+    -webkit-writing-mode: vertical-rl;
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.55em;
+    color: var(--ink-ghost);
+    z-index: 4;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0;
+    animation: nn-side-in-r 1.2s 2.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .nn-side-r .nn-bar {
+    display: inline-block;
+    width: 1px; height: 26px;
+    background: var(--ink-ghost);
+    margin-bottom: 14px;
+  }
+  @keyframes nn-side-in {
+    from { opacity: 0; transform: translateY(-30%); }
+    to   { opacity: 1; transform: translateY(-50%); }
+  }
+  @keyframes nn-side-in-r {
+    from { opacity: 0; transform: translateY(-70%); }
+    to   { opacity: 1; transform: translateY(-50%); }
+  }
 
-            .staticrypt-body {
-                height: 100%;
-                margin: 0;
-            }
+  /* メインステージ */
+  .staticrypt-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px 56px;
+    position: relative;
+    z-index: 3;
+  }
 
-            .staticrypt-content {
-                height: 100%;
-                margin-bottom: 1em;
-                background: #76B852;
-                font-family: "Arial", sans-serif;
-                -webkit-font-smoothing: antialiased;
-                -moz-osx-font-smoothing: grayscale;
-            }
+  /* タイトルブロック: 「秘」1文字 + 落款 */
+  .nn-hero {
+    position: relative;
+    margin-bottom: 48px;
+    --hm-px: 0px;
+    --hm-py: 0px;
+    transform: translate(var(--hm-px), var(--hm-py));
+    transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
 
-            .staticrypt-instructions {
-                margin-top: -1em;
-                margin-bottom: 1em;
-            }
+  /* 「秘」大書き */
+  .nn-hi {
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 900;
+    font-size: clamp(140px, 22vw, 240px);
+    line-height: 0.9;
+    color: var(--ink);
+    text-align: center;
+    letter-spacing: 0;
+    display: block;
+    opacity: 0;
+    animation: nn-hi-in 1.4s 0.85s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    text-shadow: 0 0 24px rgba(26, 26, 30, 0.04);
+    user-select: none;
+  }
+  @keyframes nn-hi-in {
+    from { opacity: 0; transform: translateY(20px) scale(1.06); filter: blur(8px); }
+    60%  { opacity: 1; filter: blur(0); }
+    to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
 
-            .staticrypt-title {
-                font-size: 1.5em;
-            }
+  /* 落款 (朱の角印) */
+  .nn-seal {
+    position: absolute;
+    top: 12%;
+    right: -42px;
+    width: 92px; height: 92px;
+    background: var(--vermillion);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 700;
+    font-size: 38px;
+    letter-spacing: 0;
+    border-radius: 4px;
+    box-shadow:
+      inset 0 0 0 3px var(--vermillion),
+      inset 0 0 0 4px rgba(241, 235, 215, 0.4),
+      inset 0 0 0 5px var(--vermillion),
+      0 6px 22px -8px rgba(184, 58, 42, 0.55);
+    opacity: 0;
+    transform: rotate(-12deg) scale(1.6);
+    animation: nn-seal-stamp 0.7s 2.05s cubic-bezier(0.4, 1.7, 0.5, 1) both;
+    z-index: 2;
+    user-select: none;
+  }
+  /* 落款の和紙にじみ */
+  .nn-seal::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 6px;
+    background: var(--vermillion);
+    opacity: 0.18;
+    filter: blur(4px);
+    z-index: -1;
+  }
+  @keyframes nn-seal-stamp {
+    0%   { opacity: 0; transform: rotate(-12deg) scale(1.6); }
+    70%  { opacity: 1; transform: rotate(-12deg) scale(0.92); }
+    100% { opacity: 1; transform: rotate(-12deg) scale(1); }
+  }
 
-            label.staticrypt-remember {
-                display: flex;
-                align-items: center;
-                margin-bottom: 1em;
-            }
+  .nn-sub {
+    font-family: "Inter", sans-serif;
+    font-weight: 500;
+    font-size: 10.5px;
+    letter-spacing: 0.55em;
+    color: var(--ink-dim);
+    text-align: center;
+    margin-top: 26px;
+    text-indent: 0.55em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: nn-fade 0.8s 2.3s ease both;
+  }
 
-            .staticrypt-remember input[type="checkbox"] {
-                transform: scale(1.5);
-                margin-right: 1em;
-            }
+  .nn-divider {
+    width: 64px;
+    height: 1px;
+    background: var(--vermillion);
+    margin: 28px auto 0;
+    transform-origin: center;
+    animation: nn-line 0.9s 2.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @keyframes nn-line {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
 
-            .hidden {
-                display: none !important;
-            }
+  .nn-instructions {
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--ink-dim);
+    letter-spacing: 0.18em;
+    margin-top: 24px;
+    text-indent: 0.18em;
+    text-align: center;
+    opacity: 0;
+    animation: nn-fade 0.8s 2.7s ease both;
+  }
 
-            .staticrypt-spinner-container {
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
+  /* PIN 升目フォーム */
+  .staticrypt-form {
+    width: 100%;
+    max-width: 360px;
+    margin: 36px auto 0;
+    position: relative;
+    z-index: 3;
+  }
 
-            .staticrypt-spinner {
-                display: inline-block;
-                width: 2rem;
-                height: 2rem;
-                vertical-align: text-bottom;
-                border: 0.25em solid gray;
-                border-right-color: transparent;
-                border-radius: 50%;
-                -webkit-animation: spinner-border 0.75s linear infinite;
-                animation: spinner-border 0.75s linear infinite;
-                animation-duration: 0.75s;
-                animation-timing-function: linear;
-                animation-delay: 0s;
-                animation-iteration-count: infinite;
-                animation-direction: normal;
-                animation-fill-mode: none;
-                animation-play-state: running;
-                animation-name: spinner-border;
-            }
+  .nn-grid-label {
+    font-family: "Inter", sans-serif;
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.45em;
+    color: var(--ink-faint);
+    text-align: center;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: nn-fade 0.7s 2.9s ease both;
+  }
+  .nn-grid-label .nn-jp {
+    font-family: "Shippori Mincho B1", serif;
+    color: var(--ink-dim);
+    letter-spacing: 0.3em;
+    text-transform: none;
+  }
+  .nn-grid-label .nn-mark {
+    font-family: "Shippori Mincho B1", serif;
+    color: var(--vermillion);
+    margin: 0 8px;
+  }
 
-            @keyframes spinner-border {
-                100% {
-                    transform: rotate(360deg);
-                }
-            }
+  /* 升目 4マス */
+  .nn-cells {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 14px;
+    position: relative;
+    opacity: 0;
+    animation: nn-fade 0.7s 3.05s ease both;
+  }
+  .nn-cell {
+    aspect-ratio: 1 / 1;
+    border: 1px solid var(--ink-faint);
+    background: rgba(255, 255, 255, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 700;
+    font-size: 44px;
+    color: var(--ink);
+    line-height: 1;
+    transition:
+      border-color 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
+      background 0.35s ease,
+      box-shadow 0.35s ease,
+      transform 0.25s ease;
+    position: relative;
+    user-select: none;
+    cursor: text;
+  }
+  .nn-cell.is-filled {
+    border-color: var(--vermillion);
+    background: rgba(184, 58, 42, 0.06);
+    box-shadow: 0 0 0 1px var(--vermillion) inset;
+  }
+  .nn-cell.is-active {
+    border-color: var(--ink);
+    box-shadow: 0 0 0 1px var(--ink) inset, 0 6px 14px -8px rgba(26,26,30,0.18);
+    transform: translateY(-1px);
+  }
+  /* caret */
+  .nn-cell.is-active::after {
+    content: "";
+    position: absolute;
+    bottom: 14%; left: 50%;
+    width: 1.5px; height: 38%;
+    background: var(--vermillion);
+    transform: translateX(-50%);
+    animation: nn-caret 0.9s ease infinite;
+  }
+  @keyframes nn-caret {
+    0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; }
+  }
+  /* 入力済み文字: ink-bleed entrance */
+  .nn-cell .nn-digit {
+    display: inline-block;
+    animation: nn-digit-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @keyframes nn-digit-in {
+    from { opacity: 0; transform: translateY(-10px) scale(0.85); filter: blur(3px); }
+    to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
 
-            @media screen and (-webkit-min-device-pixel-ratio: 0) {
-                .staticrypt-form input[type="password"],
-                input[type="text"] {
-                    font-size: 16px;
-                }
-            }
-        </style>
-    </head>
+  /* 実 input は透明・絶対配置 */
+  .staticrypt-password-container { position: relative; }
+  .staticrypt-form input[type="password"],
+  .staticrypt-form input[type="text"] {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    opacity: 0;
+    border: 0; padding: 0; margin: 0;
+    color: transparent;
+    background: transparent;
+    -webkit-text-fill-color: transparent;
+    caret-color: transparent;
+    font-size: 16px;
+    z-index: 4;
+    cursor: text;
+  }
+  .staticrypt-form input:focus { outline: 0; }
 
-    <body class="staticrypt-body">
-        <div id="staticrypt_loading" class="staticrypt-spinner-container">
-            <div class="staticrypt-spinner"></div>
+  /* eye toggle は非表示 */
+  .staticrypt-toggle-password-visibility {
+    display: none;
+  }
+
+  .staticrypt-remember {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    margin: 24px 0 0;
+    font-family: "Shippori Mincho B1", serif;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink-dim);
+    letter-spacing: 0.18em;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0;
+    animation: nn-fade 0.7s 3.2s ease both;
+  }
+  .staticrypt-remember input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    border: 1px solid var(--ink-faint);
+    background: transparent;
+    margin: 0 10px 0 0;
+    cursor: pointer;
+    transform: none;
+    position: relative;
+    border-radius: 0;
+    transition: all 0.2s ease;
+  }
+  .staticrypt-remember input[type="checkbox"]:checked {
+    background: var(--vermillion);
+    border-color: var(--vermillion);
+  }
+
+  /* 解錠ボタン */
+  .staticrypt-form .staticrypt-decrypt-button {
+    width: 100%;
+    margin-top: 34px;
+    padding: 17px 0;
+    background: var(--ink);
+    background-image: linear-gradient(var(--vermillion), var(--vermillion));
+    background-repeat: no-repeat;
+    background-size: 100% 0%;
+    background-position: 0 100%;
+    border: 1px solid var(--ink);
+    color: var(--paper);
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: 0.62em;
+    text-indent: 0.62em;
+    text-transform: none;
+    cursor: pointer;
+    transition: background-size 0.45s cubic-bezier(0.2, 0.7, 0.2, 1),
+                border-color 0.35s ease;
+    opacity: 0;
+    animation: nn-fade 0.7s 3.35s ease both;
+  }
+  .staticrypt-form .staticrypt-decrypt-button:hover,
+  .staticrypt-form .staticrypt-decrypt-button:focus {
+    background-size: 100% 100%;
+    border-color: var(--vermillion);
+    outline: 0;
+  }
+
+  /* シェイク + 朱メッセージ */
+  .nn-shake { animation: nn-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+  @keyframes nn-shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-6px); }
+    40%, 60% { transform: translateX(6px); }
+  }
+  .nn-err {
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 500;
+    color: var(--vermillion);
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    text-indent: 0.28em;
+    text-align: center;
+    margin-top: 18px;
+    animation: nn-fade-y 0.4s ease both;
+  }
+  @keyframes nn-fade-y {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 解錠成功: 落款を画面中央に大きくドン */
+  .nn-stamp-overlay {
+    position: fixed; inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 99;
+    background: rgba(241, 235, 215, 0);
+    opacity: 0;
+  }
+  .nn-stamp-overlay.is-fire {
+    animation: nn-stamp-bg 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @keyframes nn-stamp-bg {
+    0%   { opacity: 0; background: rgba(241, 235, 215, 0); }
+    20%  { opacity: 1; background: rgba(241, 235, 215, 0.6); }
+    100% { opacity: 0; background: rgba(241, 235, 215, 0); }
+  }
+  .nn-stamp-big {
+    width: 260px; height: 260px;
+    background: var(--vermillion);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 800;
+    font-size: 130px;
+    border-radius: 6px;
+    box-shadow:
+      inset 0 0 0 6px var(--vermillion),
+      inset 0 0 0 8px rgba(241, 235, 215, 0.45),
+      inset 0 0 0 10px var(--vermillion),
+      0 14px 50px -12px rgba(184, 58, 42, 0.55);
+    transform: rotate(-8deg) scale(0);
+  }
+  .nn-stamp-overlay.is-fire .nn-stamp-big {
+    animation: nn-stamp-drop 0.9s cubic-bezier(0.4, 1.6, 0.5, 1) both;
+  }
+  @keyframes nn-stamp-drop {
+    0%   { transform: rotate(-30deg) scale(2.4); opacity: 0; }
+    35%  { transform: rotate(-8deg) scale(0.92); opacity: 1; }
+    65%  { transform: rotate(-8deg) scale(1); opacity: 1; }
+    100% { transform: rotate(-8deg) scale(1.08); opacity: 0; }
+  }
+
+  /* 鈴 ミュートトグル */
+  .nn-foot-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .nn-sound-toggle {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink-dim);
+    padding: 2px 6px;
+    position: relative;
+    letter-spacing: 0;
+    transition: color 0.25s ease;
+    text-transform: none;
+  }
+  .nn-sound-toggle:hover { color: var(--vermillion); }
+  .nn-sound-toggle.is-muted { color: var(--ink-faint); }
+  .nn-sound-toggle.is-muted::after {
+    content: ""; position: absolute;
+    left: 2px; right: 2px; top: 50%;
+    height: 1px; background: currentColor;
+    transform: rotate(-14deg) translateY(-0.5px);
+  }
+
+  /* ローディング */
+  #staticrypt_loading.staticrypt-spinner-container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+  }
+  .staticrypt-spinner {
+    width: 26px; height: 26px;
+    border: 1px solid var(--ink-ghost);
+    border-top-color: var(--vermillion);
+    border-radius: 50%;
+    animation: spinner-border 0.9s linear infinite;
+  }
+  @keyframes spinner-border { to { transform: rotate(360deg); } }
+
+  .hidden { display: none !important; }
+
+  /* iOS zoom抑止 */
+  @media screen and (-webkit-min-device-pixel-ratio: 0) {
+    .staticrypt-form input[type="password"],
+    .staticrypt-form input[type="text"] { font-size: 16px; }
+  }
+
+  /* モバイル */
+  @media (max-width: 560px) {
+    .nn-top, .nn-bottom { padding: 14px 18px; font-size: 9px; letter-spacing: 0.24em; }
+    .nn-top::after, .nn-bottom::before { animation: nn-line-x-m 1.1s 0.15s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+    .nn-side-l, .nn-side-r { display: none; }
+    body.staticrypt-body::before { background-size: 28px 28px; }
+    .nn-hero { margin-bottom: 36px; }
+    .nn-hi { font-size: 140px; }
+    .nn-seal { width: 70px; height: 70px; font-size: 28px; right: -10px; top: 8%; }
+    .nn-cell { font-size: 36px; }
+    .nn-cells { gap: 10px; max-width: 280px; margin-left: auto; margin-right: auto; }
+    .staticrypt-page { padding: 40px 22px 48px; }
+    .staticrypt-form .staticrypt-decrypt-button { letter-spacing: 0.5em; text-indent: 0.5em; }
+  }
+</style>
+</head>
+<body class="staticrypt-body">
+
+<div id="staticrypt_loading" class="staticrypt-spinner-container">
+  <div class="staticrypt-spinner"></div>
+</div>
+
+<div id="staticrypt_content" class="staticrypt-content hidden">
+
+  <header class="nn-top">
+    <span>PRIVATE — 私的記録</span>
+    <span class="nn-mark">朱印</span>
+    <span>MMXXVI</span>
+  </header>
+
+  <aside class="nn-side-l" aria-hidden="true">
+    <span class="nn-bar"></span>私 録
+  </aside>
+  <aside class="nn-side-r" aria-hidden="true">
+    <span class="nn-bar"></span>合言葉
+  </aside>
+
+  <main class="staticrypt-page">
+    <div class="nn-hero">
+      <span class="nn-hi">秘</span>
+      <span class="nn-seal" aria-hidden="true">印</span>
+    </div>
+
+    <div class="nn-sub">Private Notes</div>
+    <div class="nn-divider"></div>
+    <div class="nn-instructions">合言葉を入力して頁を開く</div>
+
+    <form id="staticrypt-form" class="staticrypt-form" action="#" method="post" autocomplete="off">
+      <div class="nn-grid-label">PIN <span class="nn-mark">／</span> <span class="nn-jp">暗証番号</span></div>
+
+      <div class="staticrypt-password-container">
+        <div class="nn-cells" id="nn-cells">
+          <div class="nn-cell" data-i="0"></div>
+          <div class="nn-cell" data-i="1"></div>
+          <div class="nn-cell" data-i="2"></div>
+          <div class="nn-cell" data-i="3"></div>
         </div>
+        <input
+          id="staticrypt-password"
+          type="password"
+          name="password"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          maxlength="4"
+          placeholder=""
+          autofocus
+        />
+        <img
+          class="staticrypt-toggle-password-visibility"
+          alt="Show password"
+          title="Show password"
+          src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%231A1A1E%22%20stroke-width%3D%221.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%203l18%2018%22/%3E%3Cpath%20d%3D%22M10.6%2010.6a3%203%200%200%200%204.2%204.2%22/%3E%3C/svg%3E"
+        />
+      </div>
 
-        <div id="staticrypt_content" class="staticrypt-content hidden">
-            <div class="staticrypt-page">
-                <div class="staticrypt-form">
-                    <div class="staticrypt-instructions">
-                        <p class="staticrypt-title">Nonaka Notes</p>
-                        <p>PINコードを入力してください</p>
-                    </div>
+      <label id="staticrypt-remember-label" class="staticrypt-remember hidden">
+        <input id="staticrypt-remember" type="checkbox" name="remember" />
+        <span>このブラウザに 30 日間 記憶する</span>
+      </label>
 
-                    <hr class="staticrypt-hr" />
+      <input type="submit" class="staticrypt-decrypt-button" value="解 錠" />
+    </form>
+  </main>
 
-                    <form id="staticrypt-form" action="#" method="post">
-                        <div class="staticrypt-password-container">
-                            <input
-                                id="staticrypt-password"
-                                type="password"
-                                name="password"
-                                placeholder="PIN"
-                                autofocus
-                            />
+  <footer class="nn-bottom">
+    <span>AES-256 · STATICRYPT</span>
+    <span class="nn-foot-right">
+      <button type="button" class="nn-sound-toggle" id="nn-sound-toggle" aria-label="音 / 切替" title="音 切替">鈴</button>
+      <span class="nn-foot-year">MMXXVI</span>
+    </span>
+  </footer>
+</div>
 
-                            <img
-                                class="staticrypt-toggle-password-visibility"
-                                alt="Show password"
-                                title="Show password"
-                                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NDAgNTEyIj48IS0tIUZvbnQgQXdlc29tZSBGcmVlIDYuNS4yIGJ5IEBmb250YXdlc29tZSAtIGh0dHBzOi8vZm9udGF3ZXNvbWUuY29tIExpY2Vuc2UgLSBodHRwczovL2ZvbnRhd2Vzb21lLmNvbS9saWNlbnNlL2ZyZWUgQ29weXJpZ2h0IDIwMjQgRm9udGljb25zLCBJbmMuLS0+PHBhdGggZD0iTTM4LjggNS4xQzI4LjQtMy4xIDEzLjMtMS4yIDUuMSA5LjJTLTEuMiAzNC43IDkuMiA0Mi45bDU5MiA0NjRjMTAuNCA4LjIgMjUuNSA2LjMgMzMuNy00LjFzNi4zLTI1LjUtNC4xLTMzLjdMNTI1LjYgMzg2LjdjMzkuNi00MC42IDY2LjQtODYuMSA3OS45LTExOC40YzMuMy03LjkgMy4zLTE2LjcgMC0yNC42Yy0xNC45LTM1LjctNDYuMi04Ny43LTkzLTEzMS4xQzQ2NS41IDY4LjggNDAwLjggMzIgMzIwIDMyYy02OC4yIDAtMTI1IDI2LjMtMTY5LjMgNjAuOEwzOC44IDUuMXpNMjIzLjEgMTQ5LjVDMjQ4LjYgMTI2LjIgMjgyLjcgMTEyIDMyMCAxMTJjNzkuNSAwIDE0NCA2NC41IDE0NCAxNDRjMCAyNC45LTYuMyA0OC4zLTE3LjQgNjguN0w0MDggMjk0LjVjOC40LTE5LjMgMTAuNi00MS40IDQuOC02My4zYy0xMS4xLTQxLjUtNDcuOC02OS40LTg4LjYtNzEuMWMtNS44LS4yLTkuMiA2LjEtNy40IDExLjdjMi4xIDYuNCAzLjMgMTMuMiAzLjMgMjAuM2MwIDEwLjItMi40IDE5LjgtNi42IDI4LjNsLTkwLjMtNzAuOHpNMzczIDM4OS45Yy0xNi40IDYuNS0zNC4zIDEwLjEtNTMgMTAuMWMtNzkuNSAwLTE0NC02NC41LTE0NC0xNDRjMC02LjkgLjUtMTMuNiAxLjQtMjAuMkw4My4xIDE2MS41QzYwLjMgMTkxLjIgNDQgMjIwLjggMzQuNSAyNDMuN2MtMy4zIDcuOS0zLjMgMTYuNyAwIDI0LjZjMTQuOSAzNS43IDQ2LjIgODcuNyA5MyAxMzEuMUMxNzQuNSA0NDMuMiAyMzkuMiA0ODAgMzIwIDQ4MGM0Ny44IDAgODkuOS0xMi45IDEyNi4yLTMyLjVMMzczIDM4OS45eiIvPjwvc3ZnPg=="
-                            />
-                        </div>
+<div class="nn-stamp-overlay" id="nn-stamp-overlay" aria-hidden="true">
+  <div class="nn-stamp-big">秘</div>
+</div>
 
-                        <label id="staticrypt-remember-label" class="staticrypt-remember hidden">
-                            <input id="staticrypt-remember" type="checkbox" name="remember" />
-                            このブラウザで30日間記憶
-                        </label>
-
-                        <input type="submit" class="staticrypt-decrypt-button" value="OPEN" />
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            // these variables will be filled when generating the file - the template format is 'variable_name'
-            const staticryptInitiator = ((function(){
+<script>
+  const staticryptInitiator = ((function(){
   const exports = {};
   const cryptoEngine = ((function(){
   const exports = {};
@@ -816,77 +1334,431 @@ exports.init = init;
 
   return exports;
 })());
-            const templateError = "PINが違います",
-                templateToggleAltShow = "Show password",
-                templateToggleAltHide = "Hide password",
-                isRememberEnabled = true,
-                staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"fb059ee9e8ef367e18428f86c4b6603cefd6cd4a9b047635e75380b014c117fce74bd02632b3ec7b52db918777384bd30d21d6d18de7711c5a263bfe53eea085e90c91273c48d4ba4e0a0ce9926d08af9bf42ec8448eefd607c2bdc6f2862385bdfb955137b73394345d59203190d6d934ace7cd851094207bf00199a71658768331500cd4bf2ecf9bb8cc65479f4f20e865b2dfeb283f411e8ef8c5f0c52ec3eebe6c0d022834d5fe5cc29f4bf536d8090d1daa30630a87155529c42437c587efdc05e5155cd20689c5834f51eb9967ad6706f97afd709001723f5d4befb0e1b99455d0c30ad170bc48a45b869156cdd9271a44292b80d30934b97135211cbdffedb4ed81d338a785240e405fbb955bf307685de0cf5a90857157e61c274fad53be5b08c270b1cce81eca3a413e05bfb6372aae747e1eb2a0c75439877ffd66d99a14106a9a3ebdd7ced579b96ef2fca43e725230b2eb1a7e6913141eb05f465d7e44402b206dc72595d29000c9c9e6e4bf034f24953e738c9b7d58a16092c4fe1defa943122e7a272d57a3b46982ec239da6ecca2be51ead254aed07680eb7243309632052e2cf482a3685ebe5750e84c94f583362f2606a52ecde67f6a5b1b0df74d0fb1665d6b8f7ed1cba6b10ae2a2f35c72782106892e1f2c371a286127f4289d609815c38aa6cd05b0b23d509dabfc23120c00a40f2f26f7fb617d643787e1d187226e6d3cac0a356a41d4ab1030e4c133fa6bf06bc869b24997cc22fab0017e0cb8ea056f4d3ca6c01dd345b272cb7beafecea6c4d0788552480b9bdf979c97fbd3ce0a68e68e95c0018602a443d029197f2ac614c323dc28055f18bd4ebc562bb80190a9281be78848ca619f2e4e03f3362c2b46c017c105d62734ff9d0737e3eca49dc2287a739cfd3fd4a8a44d27da3c5dae02291f254055f8a97088c5dc956e66594bdb6ec9513af070c846923f7beddb19aa428b8876be491071bb8467dc37fdb4abd72c287f0c9690b2b9a529bb5d892f37a79e9fad4570bd8edf552c9f1197543fc00362d6d1e6025730072e99a94c3aff6f7deb50d1f4f7ee63910d7df8bc33553f572545db7967a5bb56ec8ec3b3121d362d3501c8bd8e11296b015903e852134b28b2794380ef2061219123b739ac5b4d2f37d03f06c14208394f109a21aa501351ef4c4b7f948206641fe4f71e63bdad223eb4cbc9e420f7c9d71f47421c4e3b12a542898c396b5a78c0046c3032825db8caecfb5b44a138f41f18117e8172f496d0d462f2fc0ae42b1c718c4dacdfaaddd42573074224e87e4c5974ae2c81e709b97a343814d64f6d11733c3ca3172c0c79f0253528ce49a123d8fb4ac57442ad1986a8665130f92b1d7e3a252fcb1cee0759d606961b7cb691ba8fc7c2b5577335b9a7633fd0200582b74ac6b838555f1c857f904734ba91e570fba89bf4eda2b45bedf5bc5cf9507f9141b0ef37aa3f8806c5e8a552e0d665af147d5b2b8122d047f55793965c1c4d48b318f3d7ea1295a378093a7b3368430d896e13c2eccb3de6dfc7d4609e74d80585bd1206c9650fb4ae487fb5fb49196fbab30f183f9714cc59c2fad84f172e8a479042c096cc7ec4c87dd8a30fd5f4d093ddc8297187513763a1754e67537eaa5745270b926f08bace6d474290aabebcf13a4ffe074b1310d55d96ae8a8cf3f63a1178d1fce9effca30c73586e3a76916886cdfb0b1748a22ba3a1de9525b0a9aa31f268f65d0b391ef16165cdc2fb3798db410252138b6de8d9d09110f26f10e4547a13d5d47ee082602975b96ef5e290847f849b9fa483ced4d11b5f06dfdaf67e9f475bbbcdece91419f945aba1073585fd774a542db39928c12832a91c4b03fa671a71a7734b0d0194eee495133095e6dd628cb2871b6900e90439844aa18b98622e46c55e560fd3acd8148c81a07d1b8b058655065a324476cbdc7307bd13b6138776562a1507a26d0f42abe81ec61c42107ce22e2748d07701b515b49912d4b6a45479ac7caf2976f521c21669d86f9b117bd8665a6fa4c13f89509546a0f8ad4fb86acc08e61e584bcb40aff06d42e2f7751762a5685dbf6ca06be885404d120b96ce945249c44354e4f52634ceb1d6586b45a88eff945f6ad6999a1d8aaaed55b3d9fee197bf9a40a0b570c776a44350bfe5bc42672665ae0463f926c12e5f2995e1bf96f85f667d6a1e23661442d45821d4033bac963395be10b17409c358b3a52ff37ed9a28872f560278ce5e105c4ec550f5739ce2e28d015bd8bc6d844775455eee1d8be0dc27b768d8ee464f7478c0a9e2c7654f6c82175c60141d0895ca5b9b46459a3f869bb4466a793c43e45adb29fe47c3968d4676405f995fb2f55a9f99512b2cf601fbeb65f6ed59a96fa50ab9be98c6c63aaf803acf173af9d1fd670a8c1285a21aee6bd6db188f0c6a00912ad801daf8481b3b25b3f1b4451d8b65a204a8843b274b19b49cb56e628199522b031de1170e21a5c6641d5df3df08cacd5a7bb738ab07834766c6a387899f0d23ff744b76af7d6f7cc1dd6e9784fa081bb99abdc82bbdb6eac5d1cae7143c27a3f7e075cbd63d106f08bf6137b230158e114134f9de3c6c4756bb22a4ec14ee44eae7c330cd01c4ab7ea85cf6957f13a12749131f8903e4754b0f0ef51e6546363729f8417a478cce0aea4278cf9f1985c37c247785ce809bd2a0433f1623b41646ae957a4f4a041e0f8b55f74355b0b3e977cb448b77cb4860d118bc32f2184785ef683e7859cbd11b69118094f67e4a91fa47d2f84dc5ad68921222f57541eeade3a2a0848a235e0817df8fe7a11fe8ab3ed77036ff30a32e744edace514ea4a8ba6aa7d300e3087d9207b06ba3b516d3f9d3cc7509158f84f026c841aba2663fee7b77d64cd5af9684f64b1dcce2388438e2d838ba66588c085f99d9038555b4d0bb4f2d4bb0c0f1b7733ec158f82d38f5c12231ff0b6ff7626b95f2c1d10ca92c0eafa9cd17a6194810b7ca5037ac2be4aaa34609e7e0523aa3ad141aaab7b1b30d673e64067050d59f3e5fdb18cba2ab1cc6bdfd7428301dda1ff43203d41bbbe2588794f15cd419f1f195b8dfdbb47036c70eaa77711e99b4575d3fd0e24f492e89c4875b19f03172a172101e7c02b7cdec18f0229197180d9de2e5780eed26bec2ca8ef92f1a98a03d78a0113f6f03efb734efd53c061ffc8428658a7819f3b220a072490377c98cd30ce3d9d234ac1ab55bd57f43e2f1ddcb481ee8e2e814141242048adcd88ec7c2549f74012a6ac638567227d3bb743afaf0442ce44ecf85a3bd90f1f2bdff7488cbc6c0b96d1ee610d28bf5844e0c11a59045e20ed3fe2e91a047f167c72721ee6fb748f955b1a86e7709eca8c5418121051836b0e557d69ea145ea7740d039594ff8209adc734cd5ba7dd1163e6e6898646a186834010f271e4a1c7baa03b0020534f5e830d181352871cdb5a1c24c8fb3b032b6438964b6180b6ba689a4db38ce0c179ac6ea8fe346e9290423ce0266acb4a3dc8a537875d7feafe0f34fd68cca33da75448aa769ed9967ea27e26f2ade4973f7dbe6a3e081edb6e66543f82700c691b20e7b0184c45ccdf5423c980a83aa6a53bb97146578dfa6108764912b234d475106c4239ac09d12e743468d05ae9ada07ace593c60e2d2d9b5a998660d46d7a0376690aa0e49a4700eafb9d89692976be9340060f5783aca871c963c8e401e5cf2a06b9cc4c135494cab4efb15c01d2c061fd4cfa50f30cf1f9c6c607d32b66a982ee29780c277d0bc160506065c20e7fceb783f7fc549dc46d0fa10bfc539c68ef4f45666b8115c10d5baa84b88c10e6da28664cedfebd198be41ae08db83d7fcf321066873b85a9764efb077e32ca2498933fe912c577bc3cd467774b9ab1cb52fea0a2dca955bc79baa19698ca06532d28899a5cddd33336ae1fe8ac5b48803845c07874c793757731786651db52f2dd191d12b425edfca18ca8e260e413e31a0d9d55f386255bd282eb50db36dc2b6ec83754d1545cab90eb37c25f68d13ec5c3fdd2511df54c7a2f8138ddb90ba54ad902d5f50ef2aaf5f35ba05677b0160e20dd09d46701e6e86d66e337b172ae273ca7df227dab9b34edb363976e8f46194f468963ca00f5f0ce5dd16869f705c777a387747f11159ab409d2600f6887e8b3b4b6982f45de27fcf9ea56e54a8aa13b6c11a3a76e95cbe6a61f145a1bfde9cac7807e50bb85ba20f1a5391d099c34568cd4a68650801b4fd41437806383f332834ac965f096155150f7837ca7ebb9bd18bb4bbd418a462f1c93db4e90768c35bc60b352ed1d3e4805d6e1d632c1973daab0d86c96db225968ec5ff0ca4c5aab7856afd2e0bdf8501f3538ad1ee7e83d5d7a9bc861250012a27d9c99dca5e705861c0dda57cd6ad3b6ce2eff55e62a1147e5e15b4e3ff49294c752835c8bda42f5dcc1fb73d3f015b57ad60d0aeb95c7340e93f4c264a6a4d2a972ed76420edaa950f573043c0537f6972065eba0f7370768808346a41c934555043d570bdc17e10a6c97dbcc99ab48047de0bde144bc168a17def8e5bae51e12710b7a6e54f511eeca39da30a78267485d8d0b60197aec367032869854b0c22c9748aecc059fa6d4d10a86c3af4d66606087671ca9db62cd3095823ceb37c1f51c246764adb7c776389e8150dbbc61c59fd176bb2014163deac6ffe3c96f04590519837da75f85963b82935275c44c484ecabdd0af93c2a13d8289266f4ec609b52e9355fb1c21f4df452e45fc8b8bcc19043581fdda89f827f63f1cdd9595859e05b359bc5d548d0283835a60c53adeee393ca3e48f6937ac429a36212834f9a65c801ba07401c68013bd7170651b3f609aab7a71b9aedc8b5983212d010e27a500928db9e3b55cfc45c8343ad0deb48a5eee93b702c6b067112f6f82bc460694dd01d825704447b6e24435c93e318adb16f48eac53bda4e7d5667aeff91c57f4e095da2ae5204fef48c03cc734309f8f1b492ed9319308691e6e44b50616d7da6229d292f98618e23cbc99f177cacdbfe7df571a1377d6fa1f922528ee7c52c897c7c505b9d55a739f934869eea506f60eebf688079c35c7940cf702aaaa01b4d484cf0e3d6f44a721df63b65f3817b021324868ab47dd9e417f22018e2b927ba9095e9b7fdb5a3dff9ab7237705ff916c18adcf352e103da9781d033ceb30508626c0b04472847e7c601f9b7da51a80e49ec2487b92e3b1b5f3fb95e356202eec9580e0f36e4df489743b0cbe66a837173fecddf363b7826b3f1f0dfecd15f8d2d2de5eb8c3b1b3ba15651666d24c8b93f4035fdfbe4dd799a6bb30b5e3e9247f722da131ceaa93cfb85fb01fa17eea3c697caf1dccf81f619aeb79b871154b6b2f962e95a928f056d0a2a723b4ba61eda9fa20a7bbf0eb4953e705dd531a4ae7ce3e6f1285cbc2070cb43e4dae82059d29f2c28441bcf33d9f4bc3429045f2832545f2dda9ff02635a984dc9c814506f85eb222e87e2c8fe4042bbb91bd2e24b8f1304f3b7c09b4d8b805d977c4354e79aa2a6a6a4d2a27a01fc8e641281f7f8190ee0080f9bf74925afd9c396580d464e633b40cc02d3399d49ecfa394185bd173cf019e39767ad059a606e0909d3145ede9ef50837d797a5389d8d5798fa27d5f9cd0823fc1098e616f6bcccd23de33eb11d641fedb560f21a159e476f370c3c4f7ba6cef2319cf33c789a116361835fb72163201340ba9ed90e927eb84da70f193dbf31e141d644c66477c2afb657efc9cea187491b4eb5717891d9feaf60746d94de0ee6fd3b6bf64fa7e6af7f4c47a46152acbd14d1426e827b09750bb5b124eb3c40b6c50b55cc5045342416bf17d2c58f9c0544827ecbeb4aece339d497a6f2d6a663c9881af1a08de3406103149a50d9f43684a0b895ef06776e7a549c92ee6ee5e899464de46f12addcf08342f0c4453b59aa8d8776d4232d3ff30521307ba5ad7bdd1082b327249ecd19ed6f7de5f87cf88087d88a2da67f751ba7514993354df97e374ea9785ea1f1764c2273af0cc79e3f83964dcec6a2b3c53f88037bd752e5a25b9119eebaf2d1d77ff7ef49dfb1ebc6f98ef65645cda22f5b4436ed8241d4e26e5e5e60fe7a7767780e750b7165cc9e676b385d2fa2018e3c701bbe159f41a6137beeedbf3165534099bfc2567cd15aa32f7a3e1f92543b62e57b6ba868014772b1d828c8ad67e46582810f17399ce94614ecf8e700d26f4ccb1776f99884dcff4ce51dccf93872f371c7eba84114cb391579fb44cbfb02f6ee038c0fddd3d4d6f93cf8973348be86d1079fd094209b54398388099cbcd6c5b9ce047775c0c7744b594149812c6aefd279e185a22b69135f910bcc3600eacbad94c46178d86b4801a96b9dc75f565d2067e08652aee39d15e9d749f90d6adeb3578d8d407fc758f3382082a502d115e0f72dd3f357e068c526e487d339ac3fc15ceb2d3d6fbe97b0ba84e81566478fc599b9ad4c228b8063598fabebcffe8cb1f382854b6b463c18aaf6ccfcb678b06c9e919ba59aa9485d9127274700dbcc5e7bd0ce3a0b8fb38b7b2c834e7a2db988e9b8b81bf54e93929458197c27f61b25e65a52287faaabd152d6fbe4c94682e5ed66842bdab849883ab2aa157b1f8f2b189f6551583fa1ca533bdcc4425970af8961b93a44c6e4113305939853ca62cd23c12473e44eaa547e73eca96c28328dfd90ee612881062d67bb25c82a9cacc1c8ad7c4328db87de0bc4ae3b47e4c10cdb6889664425c68c22139a38b7262bb6e0587eb34f3ad71afb97ffb1373c415cfb889153a53488b170c29e606f970456d2e63d045cd523a4f7de6a3fcb817a503a4df64b1db649df5b9b71e59aa3b88d3c86f3a6d5cd792594f96b0b38c0e8d3c2568c6d0022acb970545e102ea0354237e0d86c243afec1eaec13b49dc331826498383bad9c4929c65cfa39663877a47ac37fab7e117fa28a36767e28101ca2c15d494b8f86ec168bbf8ba15f104bcdbb32bb2219a2b354ade624818771965f7b570912be74886ed56b12886c452bd853390cef3c589dc22a274b5561d8045114f310ace7438c8a38d7795451501e2f4e8699c361a96b6cb9912a3daa1b4a420979f31dd51ff09989952bea4b3e6ab81c005039c85dd6736ddaf41913e7bf4417e3a375ea8e9fe7430567012763fd109ef227599edfae00d4fbf36ed1f0c229d1fb4d72605e6abe243ca66714abf335ad27ba1151f51a90b5c7d8a10f9083c0a0df14679f0df2a06a883fb76e81f3e507217f0dbef16a26578d180e7a792f0a3a9773400f301a19acf9975a3d92a8e5fa4d860fbd2ae3353395d5b61042b72209a3d7d2b0706c9065404223693d63bb7c6b3fe729b3458318b2f15fa1885b9ea42abcbc2b54550e595c7b7a158dbae569748a14a66126d1ba9337728627fc33f3b3e9b7b6a5d5b581f0427abe8efd0634b3ab5087bcf1fb2bd3590d039542c66a9af3f50b64c1778e1728c45f34da82b0141c41bdf2fdadad02137a4005999044f7c03479b8a019a2fea9dfae25ddaa579b4fa05a1731e4691c8d6e95037050b353feaed1f93327407d3454afe16862a7901388e48920214532f78458a6a190d4e2fdd5a4d3cb335dc11bf7b0ae669c01e19787a2ea76db413531f239f5ca3a78ee268f27ecd7a792af2bb65d2594ef4b64646f743a3df260599a047caae8dccc0f099f3e1bcc06cea94f6a81b23042e6b558c380d1f917d1ba70618dd017923a96038bcc63da8a7c9e5ecc9ed83d578aeac6e9d5eeabe6a7336a86996e7b62c62c5e015a2a44dbfe68f93daa7c12715ed109bd6684046a327986a9f51da72ea1c36e5b293c12940ac06fcdb7b27c5571f4381814d72063abd6766cb6da1e3ed164b5992b30f4cf5f46caa493777c73ae735c807412983d72000bfb488d461a7025d6beee166194efefe55e31f522d46b9ab51b4c777318685af0ccaaa61765a26b98c64879bb30c685e49c031c29d737e5472db405eb0500636912653afcf9ff7004fe82a2defeae0e43d3b177684254eb5d82e206dafde5db6225c04829b3ccc3f51dd6f2114a4c3cd90e32d5a6cc87d60d0ef7eff0268d2b23d958ac977fe02f6d931e5babebd60ff43dab10b5696be4baf3799846d09de5d02ba40ff90924b4eaff2475df0893aa571422eb3063cf4744da0a9abfc35eba2d4057428461ef2086d1c06ce28a0cc2e6d6d74e7982e4ee015eff43bd6b8eae2617ced6e442cdc721385dc7b8fdaee4e57466dbf18eee3a9e46450578455f09cef29c1a9f5af3100e8b191462eb5ceeb58850a82b83d5d1400ee5cc9b5155a26ca80e9a9d7010a81aab3e74","isRememberEnabled":true,"rememberDurationInDays":30,"staticryptSaltUniqueVariableName":"979262f428fd799154fb5c8d0857ffc6"};
+  const templateError = "合言葉が異なります",
+    templateToggleAltShow = "Show password",
+    templateToggleAltHide = "Hide password",
+    isRememberEnabled = true,
+    staticryptConfig = {"staticryptEncryptedMsgUniqueVariableName":"c6aa85e040bb9c1faf2d234cf115a03f859c297d67cd3dcc920592e3ba3647a7c3a5768fb3aed7ce8a14a4677fd6b5bfd60ac661a8e7314143ac829b2ca8f1b528905c5a970919eaa503f48461c727d46818a7fa4d10698777548007c5e595e0557385629d7cc960db52b1dfd2882d8334d99768e9eacbd0e8973c765be3fb2517803186efc6077c17b943d79fa97a4d9be8314f14c5a94b6d13885990cadea6b05fc3f7b4f3996802c5224276e653ed1ebfdf8016c08f6ad9a218502a635049e4ac06b00e92b0b1b86de57bc648b47c5942f4c066605ad3939aaf24435c8661d09ab0878329a0bb36172c82b381de0f7059ed724f22a41987c9d38564c094e7e0fe6f381466bcd826c22273596018e85197c1cacfa7357c8562f26733e0d2e8dca23ee50d4c6896e9c2284472609121243d3a1188e00ceb43bb83cbb9948c5960f7cf54aad149421c369c712c0ad4e3f1fe1bd78838258b1646867719842acca84a25a52656f43fd29697e9e012b293ed75b981dc5509beb290ca1a69fc49e26b1d3a3021a8b7a3eee5191521d1b8533959a687f8be7a5d282af61f001b80cf80159e7275ce1378c0a82db89391bafb430cdd5813d8b0781016b6fec8fbb1063bc7d245527ff6091a1d1fba74c550bc70b33e1610b183dece005348e058442d3c899b50b76e6351c1aa9484a1cf45f9fa650ec1c2380ce1b765e2096861b018eec2d4b78bbc2abd020a790debcf4b7066ad7419013334099d97ebef8a8941059f023cd190888b225ffeb079e26a33f33a35d41e3ffdf9054605c0e89ee5897a0b0091c0e7dee3c9cfb5e202a6fe90d7a064be21c70f2f3d4aeea3450e4fa69d49ad364ad993b89622f2df8608cf8fc003d853281f44adedef1ce3cce83899befce60f730f311a49c73a9022bf384be9f45cfcbff13f38e269cfdd677c15b7c73b98b99277b6103b809f52b54cf345fd37349a9c83003eaa12407bb28e87a0824fec3ab07a8bee7a7b15460992a1f0f38275caace37cd0d00d595260e4f7bf0582e5454a3d2516f67a53cdae0996a1cf826bf90062786ea2bda2d8900fb5f450211fbc3b33576896af80bcf2f60f01ff83dd0161c7905c796de9b9666af4de4a9b37639723b7e63407df2ca47e0c7aae0f99a375b836a7ee7675a817ca9b3b892af1a796678b7dd626bcc0ef7aa080464fa4f05995b69f34563d59eb5afe1082327d07410b42b30144f7e898ea221d779bd74fe773f1da2c56126219673b2a7be9fba4996592372c57ab1b8c203a2b9689017c62f598b7708742d5da36366942812259fd4ab66933009e4f45cd47852d43d45a05ab85308e1debaebb34b67d3b825a14cbc5f8ac6d4996276697a9d356e19aac15c85bde6e84c3c9d42abcd48048c4cf89a1abac6a44b9aa791984e10e3fbacf3219bfe6a87bd7b67cda051cc693ca0ed1fbb35d11564be46e4a98e79a39f585d03890bc6571ffbfd1718709054a6b0fcca53534e590c621baf6a20631bc913ed729c3b45c252fd8e77226ed07cdc6c8c142a0f3e4c9a09c197efc11244a7fcf5c1b503b17f034d993c77f39496933396d5c7c997e9b064511a4c4940292de096ca9d8aca957aa007d590a7bb4ceaceb625d130444e1f75ee956b162bbd1d9e115721d1c1c5e4276063423109ee87e981b3961e365d35cec74b42986f8a154c97644a1d1d74947290e2ea066f7c97d09652c99d1687c06cb8de768136b0b1740e323c167ed5597199af6ccb4f6c0b2252a336cc469c5a33eece33d6432aad6f2e369e31050a9f18bd7b5a7113c56ea166b23bc75855ce4d2e2d18a78076d47e1c6d658eeb93923d3e8013cd0cb953209d2e87d9eb46a133321b0fcf69f2d55920983aec34bbd614e45101eaa479b0ea99b1198d860f987840fe11df1ff61bbbb0bcb3700965f421063eab81977da0be3b7013f6fc818ff353bb49d18d266184c837404144281acfbffad303618a6e28da573cd9f22207e8d6aeb4402a8e9b05cde33faab47e80d121b2c0276d29ed80dd6bdf921793a3ee552e0a8e4914e534633dabd206043c89ccc0eead298085bd931d52d092fc4df3fe2bc35d14dffee3d4334164433611a08510ee3775ea1a39a17fc5b093baf2c1bd68ba854e24688e82ed37bec2c6dc8d3d69812cc213fa5b3210b02ab4d92ee732d1fb48ce402b18d3b8ba568c996ee0e65ab7af85b1662d2b682de56611c449c013d3d8602a393e6ccaf3caae4bf5d2865179cf056ee8c7efafde724c82a836b8188e825b79f556b8a21f0f02eed18e2f319340156594825176ec3d8161830bb15af3ec0fae766711bb82d5e7e6ea035e6efe1acafa68217e73dd4ff99430e6347bd1e9f1d61b4beb1d0302b1e647a7d46d2e4b4a8e459d241bb6078e6c8bbdde499f05f58d00c177de88686a9f29edff75f6ffcd75c3dfec81927b82ef21b3dc1dfdc8a890541d5f12bd1f60a9a1227926aea947eaed1269a03732985ee98bcc57c03dbdaeb5b6d1355bb1849fe8703081b48a01b625a51cf8d7f8041add1c78d264fe66672832c75338ee68bcdd185050342c147a9335fedbc9fe545bf47cde01032d7b54494139674ba9feb6f899ba928460fd947479b4bded90bcb12f0c825b74768d55cf4367581f7b83468c4b27111ae3fad02055c67da61412742f6f4fa50584a43b5548b58b208d3c5379217e3a3f2755b24e12cadab4176dcfc8cc8afd0a74a7a5382ee10d9eb10ba511ee86014507b5aeec1ae1ef0773e2c8d80521d25d6b9e681d6c45b76f3399b09cb692ecc585033d156abf78a7ce15932d4656c7f10a11febe0691f2b4b43480b6eebef77f94bd20fde73366e7c40f281c8754e8574779006918f2e71af574acdccfa4f328173e85bce1eb0b89cc4475f5bde70702ab58aa7abdf3fca5454380f648d362926a2c42cc673dbef315cc5e4c3f348684929de2ac9133e8f1cc0fc372bd3d89c59aa75a077291783aefa80c4326c7ca5e44cfd097a7c92f92cc4cae3f0db59116a6356a4f35958c90eda497fc8363743d6afab05fed9d3916e04cfd86d2c40c199b767df3f053fa92698265a2a64a8a4b5e7ba92a7d82c760383e578f2a20b33e8a1796efa6d754f91d8ac6f5b91808af9fea82bcd48502ca7dc88862f773111cfe835497a053d727cd0866907b870a0f30a24cc866beda89375d10dea30e80ed233b09827cd336016a5a107b9795009aeb7fc32f400e839d963929d521a02a50738fca89138450a6154c2988c55769ecb0d63f8f8ad50ead805077bff9b5d665ad71983b1e223dcba0e6817ba59a9a0d11e2729313857b3555b1856f8c97548fd17fd6b46fbac2e5758ed8e3bca8738065d025043c81d8abf1dbfc2d31c19a2d894c13af2aba66e905451fd106a73ef39cbc55abee924cee68268bdbc817fb9a00640bb842cbd770d27dea97922276b6c0c23e1a712cafdd6944015cdcc3721950a9c5e03ab3e05b296c3825318dc644041f1eae12d908d89e4aca0649d1fbffe695b3bcf3ddb7af5782b02b55ccd71eef59cda2104f6b43640987f74d8be617897c2a6c1a6ffbb22dc3d12c1589300aa540e1deb1abaa067665397363bf90389ad4ef314442f38bfa0773d83fafc7d5986827988f3b0d5ef2a010112acaf1357b0d00bed416a7d2948eeb950d3cf955fe1df538b6b8b542a85f559f94b7f2ca3372eff11006366909710d757cba8c425cbd2174a7cf777c6a562d3b315abd4f24d4861e51c72d73f710b36fdc2e63feffd70334f325d58113aebbe943d488bc78c383de28982f7300958321f3e1be773ae6fabcded2af040697acdaaf96855becb2d86f759263ab13d5ce6e2f90a278edaea56d7cb22ec161354207479461a5351bb7b25d7385ddd7e4341019406d589a37b82657dc45ba4883f47f26307f8df319718dff65120e1e0154bb4af11bc85c2b9b754adbc71a49fe933ee8b2e87d0c25107249a20dc111a5b272340c913a9a67399473034d47c470b3592e981c92853a308a34fdf713a97f8e60fe4ddec61295d35a220e9fc5232afc89f4f8391a45e1144c692251f6a71c3558f1a791792205953fb6631f2bf685698e6f304fbfcd64b62fa5ae17167eafb21ffeb8d4a3fb993f2bbff5e71b85df8b5c18e2cd32345a19b2b0542196bef048ce0c385620ef243f63e75f6cc0bdf3d7427378fd4d761f645a6a5066465522198c43010a6f418237f649376a9e2a58764a271503858666f5b19a9a8f2d4ba69f9234ad263d787d3aaf31f4b743e28cdc99b2c0046560a2744d1a89b12aa50ea8e2348ece9303aa297de701fff3d68067b3de6416c373348170140cd63f6f6db94143a7fbdd0c5b04ee05fbc812744135db26051d3beaa6072c4061845abfad42060ca07e34ff26f7e07e33bf6d7d3d5b93d825acbceddc4112724098e89edccf742b9093bddeac031a34a352debaa9b9f5fa1fad66e2763ecfa18655a1fb467b8c72823d0abd22beba33e9a56688672eacabbe1c12df8173c28e029a465bc4531b136440ab3fb0bb43f72d259891011d0b27e10f1e0db01348965ff4863f157ee65edc3843aca22b1ac903db5d642a8cde9b23519713e94bf9ae4d677d72b23753bfcaade4d4fdf9fd0a13d9791ba9f79bb682802df832c3a385bc02183082dc2721bad9dcb385f21f07264a782a339113e89362666ca88dd4fdf0180282bbbf42bb7b8fb09f76feed45e98071131bc40460afaa6f49dbeec8e7c2ac6bd71c2d315b4646e95ca0ae806b3ca7b202b0f8bfe760d9ee754d6412e70735b9addd20f9aafa95ea33a381a61fa867b56cf5dae3a1418eee726d38588bdaa01731b665a720ae84f90636ba78ab66ba55cd5f9807c6fc257788bbd1d18fbc971bbe841abefc6ebc1d182e1d606bf87e0de44d0a77e6d9f2129931f37b93f83b3a8df4fb4c00cd12797ae2c2957a6cb1da2cc370fee97f6c4a62fe6d9feb23d692ff7c3556e7693b2e238cee53f5099e61a43d228ee6ec4d69319157c801a695d9e591b70b5db0b3a72f54d1321ab6d533030e36c885bde757ff7e89dc44f08f852115bb6c1d78fa0cf751cd821ce61314f4c10fd694911291b5dfccf16404f34a534ab1d44afa400938325fb6bf3af395c5f4d76df1b1943786e5fcd5d91735da163222b035c73691d05e29edb86d4b6c6c0cb9cadffdb27fbf437068859f8423a82453c7a7aaca3eadf8871032ff10257dbddc10e0b631d902f61e44a9cac3a9bbf7c8a88e6e20a5beea748f6b39273ede6a52c16058d6fb4855ff06c9491b32470ea76e2e1e7f649d4be5a9b3ee4649edf9519fa1de2b0f72047b7ab6f47b507c6e8f8c334c0acef198aa4ff3232b9866d6f1743852174a4bb5597861c3b9f9589c4d35a64952762435c5c52edc90246613aaec43be904e00336c5655f2fd95ae0cd00fb864648b1e8be4c908e3548372c6989bf4901b5ea01a453d25d1101a5445b4713395dc5c326406b72cf7af431e73b81bc99bc68cf28b769be756b088e9d8c3dd3d0273349f59928b0a3ac10c116b6c2e3fd2cb7c31ad03938e41028488b8c5c5f99f35d207d87275c484327d95a2e09b67af186af336b1db777cf283088159c8e8aedd92f66bb7e4534c3e98422355164a359de6ea17470567f4eb8065e43444d8dbc620f919252cfff1339b12b5cb21b3e4050b41a2113f5724d8eab3cce41ac0074de2b6789a5bf3e67fa30302dec2063b958c3b8e53d429b8b1dad34ae93eda0cd7e685d166f4002d2db68bd3baacc526845064698809ec3af5f158eb5d6cf624a0324886dbe887050af51c8823491fd0bf34535c374e2364716cf0a0c26e7b5bf262ecfa814f3896f1d4ecfbe7b9f07e84e4430f65a51c47d629c141a3d5f0b43de827c158f203e820eef301ee326aaa8d18b5838b16e8d9f38ccd3ad71a7404072b260f41d66f32ef967fd7d0f86c5451a78174745ca254c36bd4077d1056a7de8850c52db67d862be68078ff25e88d8bba0df791f30195ad88eef7b5c90cbdc9a8fa521c62308ef9f1c0d8bff262289f8899daef26a8a75e2109ec3a107e288d9c4df485e2f316e767359273ca1444d0481df51083a572f629c2f532210348023cdd92fe7aa90faa4e0bac93373b2ec297a6a99df08af53f5eee2a497f7f57e1fd62b6183ed2a14d63417d8185883bf06c61193ac1f0f9f3fbccd12c0b508924b6e6bc81459158ca29e1490aa329eb72d2e02fe9ed4e0fb54d7201293be4f72020523d5c168275abc30560934d74e2f25de0ad5b4fa5584b8ea466d52901075a314dc96a5f66b25688bf9f393ddf784bbcf00256ac17db01cd98ea82c2c49901166f56314f6dec97460f57628ea583313585440add145f64b6c02b64fbc57df7137d72ae93377fea70fdfd85a57d65c66fbff57560a25d7173259379762ba0461ac1aaff2b6a675bafb58319cceea851ee6312f5a70ec191d67af8e5f66de1d2c9ab1c494ca1be92a24ee475be967720353371351396b470165a428e65b7eeb01b22d7c4bf74510c0b70620aafab56d86d337165bf1e5fb040e8d8475c9a24225d5cc14a967526f8a08ca6a7b2fa4e7d49187c8fa123fb2a5657057a4a4cb80fbd596140f712993160a86766a18817679608646b34b7e6f3f68517a3e6e1681c002f768b1b469f777a70e69598e9ce8110b858ec4c500c5b1dd985b648d6d32f1f11f94880bf1fb49401cf2bcc2d6238d057ac75a51f85a035695618638d7ce2d8041dc99c9a56810fbaee5990e5ac831ef82dcfe7c2aa4a9711eb1d64f486986b5cbee44ac00d9f060135721b227448b7ebcf24bbf8fb9a4a8d88caedb5beff5003204b6b5927f97f0fc079a1eab61c22c797dc95a2dac51ea178c362e5ee3aba64cd46e278d01c8cf7772a9d4a0161260d88146cb873f0b6a1256b0c862162b10ea571e6e04d2a7c6f11319a17abd7e2241b214149b9988fb46cef23607d3caf6c64b9c39df12b88542e96750320795de1eb46ad0a3d03c412b6a148c6f2db67af9eac5a408a7819d7925d2b6e859c79626e954d028f8eb4027e0654bfedf4574ddf5087bac1b01cd2e1a708052c656c1953cb7026b8010cfa0c37d84c5a95bd9acfbc5afc87a0ecc506d106a2afa0f78bbdcf2cae9aa1df72d9ec8114a0a3ea5f9e7a6f0b846b62919de4998adaf4b4feb1c7dedf9e654af0f1a7d1c78ef4a2de9ce3f82feeacccb6f5f6038df2def05e511aec33a4344626b76f276ffc538df9f6dbdebf2090e83e665f9ab58125dbb8f02ea3c0059aa35a45d851be62dacc1d28d9e3b57a2f9aa8a1269a98a2e1b8a8d5d8a2f65048f5be8fc4f67626cd287f6804e3598136d49cd9b869b23dd06a9474ae1a3c41cdd6e84bdccd7b98f2b62dcb7dca49149b318e049fb1ed7dd99f19231d8501ba47f5ceee6ade72be50b2004e543deaf53f5e6bedbe0b67d18b2583fa302e3cda2ad681f31c2c0bdc88390c4309396941da3dbe7649068ffb8ea85291a86f9b3f324347b149f34c737cb1c2cd0a7d0311a447c11a055f1710771fffb2f33cca1dedbed0501112227ef2250bd2fbe8e43e14644f1330305141d8716c7fb5917ae251979a155fff5d3c6df172dc86e2e7d801f6584770656fc6786687724fc043ea5db3b2a3f4b0bed084d0c3a935fd12e82eabb416bbad3019b6c6f02d65305b5b9d2c1654188f3fce513f07a82d7a996f464a7b8985e4dcc5136a8893ea560318c720da8c273b20c3759312829eeb0eb88241d316d00148af0582b07a4dcce19f1fe8c47d5d28f46f18442124e0cd5fcc0cb5665ea0a56c06f248f73049cca8ed7d8c67517678a66ae73e4c29a408f8a447af7b59588d09e7940f0bfdb8daa38e4e5a57308071264dcc147f121b6dee4d1120549cc4b08d98aafe2a71a07c6757af619aac568a05e5eadf54233baac6d25a32ea98cbbf0d43cda64faa1ceeca9188bac705574f4fe5a824618086a4f79b7c4d072cc0ed45f0a99dcb224c62813bf8ba188c3c7841263a4067175bae2fafb7853fb17532a205156ca4eadfcb26e9f08e0ee2a3321d7a7760efb69ce7526609338c2f97a26a65134b00cb288565a3d2e2d86fe79e94acd09aab550ed5efeed8465fbfab67659b7e9f134d637bcc4de77b5d340a84b24938c0fdafc75fb7112f8db91924086153a576600c4e43d594d847eeccdaa816c377630a22335097da85f7e0c8710410ae92cfee1a562e676f50a0ab3728fe453fd89a0ceedda7aa6685b80f4bf018e92ada56330fd104ce68da06f1fa1f9acd792403aaeb05191f65fb2729ffed2b2e7857963693a8951aa3a10891b8100232f5a16b1b352c3ba4148d0f8ae2b430953a4c64686cf0f836a08cec774e3780c4df7d27812f5","isRememberEnabled":true,"rememberDurationInDays":30,"staticryptSaltUniqueVariableName":"979262f428fd799154fb5c8d0857ffc6"};
 
-            // you can edit these values to customize some of the behavior of StatiCrypt
-            const templateConfig = {
-                rememberExpirationKey: "staticrypt_expiration",
-                rememberPassphraseKey: "staticrypt_passphrase",
-                replaceHtmlCallback: null,
-                clearLocalStorageCallback: null,
-            };
+  const templateConfig = {
+    rememberExpirationKey: "staticrypt_expiration",
+    rememberPassphraseKey: "staticrypt_passphrase",
+    replaceHtmlCallback: null,
+    clearLocalStorageCallback: null,
+  };
 
-            // init the staticrypt engine
-            const staticrypt = staticryptInitiator.init(staticryptConfig, templateConfig);
+  const staticrypt = staticryptInitiator.init(staticryptConfig, templateConfig);
 
-            // try to automatically decrypt on load if there is a saved password
-            window.onload = async function () {
-                const { isSuccessful } = await staticrypt.handleDecryptOnLoad();
+  const inputEl = document.getElementById("staticrypt-password");
+  const cellsEl = document.getElementById("nn-cells");
+  const cells = cellsEl ? Array.from(cellsEl.querySelectorAll(".nn-cell")) : [];
 
-                // if we didn't decrypt anything on load, show the password prompt. Otherwise the content has already been
-                // replaced, no need to do anything
-                if (!isSuccessful) {
-                    // hide loading screen
-                    document.getElementById("staticrypt_loading").classList.add("hidden");
-                    document.getElementById("staticrypt_content").classList.remove("hidden");
-                    document.getElementById("staticrypt-password").focus();
+  // 解錠音 (野中ご提供 mp3 / keyclose3) を base64 で埋め込み
+  const KEY_CLOSE_B64 = "SUQzAwAAAAAgZFdPQVIAAAAWAABodHRwOi8vcG9ja2V0LXNlLmluZm8vVEFMQgAAABEAAACDfINQg2KDZ4NUg0WDk4NoVElUMgAAAB8AAACMroLwlcKC34LpibmDToOMg1qDk4NnjK6DXoNDg3YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA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FyQeFJZG6KU2USeSuSE4TmSYhOF12N9/Y19blf/7smSiAARdaExpJi6waQxJzQzDoxFh1QhHpE/BRRDhmBCYAG7IrGCqRy7Itk8pkOzlRUVf62/RFZ///VLP/+qOUxxIEGDiBQCCOJDIOVDsZUZ17GCqxlYysYysYqOUMAE6AAKhO2ycUtE4uFkTilonXlPknFoJSU8Yka2zT/ycWgsiSAz0Nz5UnFLROJcZ8CihrFmfqQo0FQyEwyMQFSWaChpiRb+7a/4r/j2mmAIXMpiCmopMQU1FMy45OCAoYmV0YSmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv/7smTfD/AAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpMQU1FMy45OCAoYmV0YSmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqg==";
 
-                    // show the remember me checkbox
-                    if (isRememberEnabled) {
-                        document.getElementById("staticrypt-remember-label").classList.remove("hidden");
-                    }
-                }
-            };
+  // ─── 和SE (Web Audio API procedural, inharmonic + reverb) ───────
+  const nnAudio = (function () {
+    let ctx = null;
+    let reverb = null;
+    let revGain = null;
+    let masterGain = null;
+    let keyCloseBuf = null;
+    let muted = false;
+    try { muted = localStorage.getItem("nn_mute") === "1"; } catch (e) {}
 
-            // toggle password visibility
-            const toggleIcon = document.querySelector(".staticrypt-toggle-password-visibility");
-            // these two icons are coming from FontAwesome
-            const imgSrcEyeClosed =
-                "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NDAgNTEyIj48IS0tIUZvbnQgQXdlc29tZSBGcmVlIDYuNS4yIGJ5IEBmb250YXdlc29tZSAtIGh0dHBzOi8vZm9udGF3ZXNvbWUuY29tIExpY2Vuc2UgLSBodHRwczovL2ZvbnRhd2Vzb21lLmNvbS9saWNlbnNlL2ZyZWUgQ29weXJpZ2h0IDIwMjQgRm9udGljb25zLCBJbmMuLS0+PHBhdGggZD0iTTM4LjggNS4xQzI4LjQtMy4xIDEzLjMtMS4yIDUuMSA5LjJTLTEuMiAzNC43IDkuMiA0Mi45bDU5MiA0NjRjMTAuNCA4LjIgMjUuNSA2LjMgMzMuNy00LjFzNi4zLTI1LjUtNC4xLTMzLjdMNTI1LjYgMzg2LjdjMzkuNi00MC42IDY2LjQtODYuMSA3OS45LTExOC40YzMuMy03LjkgMy4zLTE2LjcgMC0yNC42Yy0xNC45LTM1LjctNDYuMi04Ny43LTkzLTEzMS4xQzQ2NS41IDY4LjggNDAwLjggMzIgMzIwIDMyYy02OC4yIDAtMTI1IDI2LjMtMTY5LjMgNjAuOEwzOC44IDUuMXpNMjIzLjEgMTQ5LjVDMjQ4LjYgMTI2LjIgMjgyLjcgMTEyIDMyMCAxMTJjNzkuNSAwIDE0NCA2NC41IDE0NCAxNDRjMCAyNC45LTYuMyA0OC4zLTE3LjQgNjguN0w0MDggMjk0LjVjOC40LTE5LjMgMTAuNi00MS40IDQuOC02My4zYy0xMS4xLTQxLjUtNDcuOC02OS40LTg4LjYtNzEuMWMtNS44LS4yLTkuMiA2LjEtNy40IDExLjdjMi4xIDYuNCAzLjMgMTMuMiAzLjMgMjAuM2MwIDEwLjItMi40IDE5LjgtNi42IDI4LjNsLTkwLjMtNzAuOHpNMzczIDM4OS45Yy0xNi40IDYuNS0zNC4zIDEwLjEtNTMgMTAuMWMtNzkuNSAwLTE0NC02NC41LTE0NC0xNDRjMC02LjkgLjUtMTMuNiAxLjQtMjAuMkw4My4xIDE2MS41QzYwLjMgMTkxLjIgNDQgMjIwLjggMzQuNSAyNDMuN2MtMy4zIDcuOS0zLjMgMTYuNyAwIDI0LjZjMTQuOSAzNS43IDQ2LjIgODcuNyA5MyAxMzEuMUMxNzQuNSA0NDMuMiAyMzkuMiA0ODAgMzIwIDQ4MGM0Ny44IDAgODkuOS0xMi45IDEyNi4yLTMyLjVMMzczIDM4OS45eiIvPjwvc3ZnPg==";
-            const imgSrcEyeOpened =
-                "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NzYgNTEyIj48IS0tIUZvbnQgQXdlc29tZSBGcmVlIDYuNS4yIGJ5IEBmb250YXdlc29tZSAtIGh0dHBzOi8vZm9udGF3ZXNvbWUuY29tIExpY2Vuc2UgLSBodHRwczovL2ZvbnRhd2Vzb21lLmNvbS9saWNlbnNlL2ZyZWUgQ29weXJpZ2h0IDIwMjQgRm9udGljb25zLCBJbmMuLS0+PHBhdGggZD0iTTI4OCAzMmMtODAuOCAwLTE0NS41IDM2LjgtMTkyLjYgODAuNkM0OC42IDE1NiAxNy4zIDIwOCAyLjUgMjQzLjdjLTMuMyA3LjktMy4zIDE2LjcgMCAyNC42QzE3LjMgMzA0IDQ4LjYgMzU2IDk1LjQgMzk5LjRDMTQyLjUgNDQzLjIgMjA3LjIgNDgwIDI4OCA0ODBzMTQ1LjUtMzYuOCAxOTIuNi04MC42YzQ2LjgtNDMuNSA3OC4xLTk1LjQgOTMtMTMxLjFjMy4zLTcuOSAzLjMtMTYuNyAwLTI0LjZjLTE0LjktMzUuNy00Ni4yLTg3LjctOTMtMTMxLjFDNDMzLjUgNjguOCAzNjguOCAzMiAyODggMzJ6TTE0NCAyNTZhMTQ0IDE0NCAwIDEgMSAyODggMCAxNDQgMTQ0IDAgMSAxIC0yODggMHptMTQ0LTY0YzAgMzUuMy0yOC43IDY0LTY0IDY0Yy03LjEgMC0xMy45LTEuMi0yMC4zLTMuM2MtNS41LTEuOC0xMS45IDEuNi0xMS43IDcuNGMuMyA2LjkgMS4zIDEzLjggMy4yIDIwLjdjMTMuNyA1MS4yIDY2LjQgODEuNiAxMTcuNiA2Ny45czgxLjYtNjYuNCA2Ny45LTExNy42Yy0xMS4xLTQxLjUtNDcuOC02OS40LTg4LjYtNzEuMWMtNS44LS4yLTkuMiA2LjEtNy40IDExLjdjMi4xIDYuNCAzLjMgMTMuMiAzLjMgMjAuM3oiLz48L3N2Zz4=";
-            toggleIcon.addEventListener("click", function () {
-                const passwordInput = document.getElementById("staticrypt-password");
-                if (passwordInput.type === "password") {
-                    passwordInput.type = "text";
-                    toggleIcon.src = imgSrcEyeOpened;
-                    toggleIcon.alt = templateToggleAltHide;
-                    toggleIcon.title = templateToggleAltHide;
-                } else {
-                    passwordInput.type = "password";
-                    toggleIcon.src = imgSrcEyeClosed;
-                    toggleIcon.alt = templateToggleAltShow;
-                    toggleIcon.title = templateToggleAltShow;
-                }
-            });
+    function ensure() {
+      if (ctx) return ctx;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
 
-            // handle password form submission
-            document.getElementById("staticrypt-form").addEventListener("submit", async function (e) {
-                e.preventDefault();
+      // master
+      masterGain = ctx.createGain();
+      masterGain.gain.value = 1.0;
+      masterGain.connect(ctx.destination);
 
-                const password = document.getElementById("staticrypt-password").value,
-                    isRememberChecked = document.getElementById("staticrypt-remember").checked;
+      // 合成リバーブ IR (2s decay, stereo, exponential noise)
+      const sr = ctx.sampleRate;
+      const len = Math.floor(sr * 2.0);
+      const ir = ctx.createBuffer(2, len, sr);
+      for (let ch = 0; ch < 2; ch++) {
+        const data = ir.getChannelData(ch);
+        for (let i = 0; i < len; i++) {
+          const env = Math.pow(1 - i / len, 2.6);
+          data[i] = (Math.random() * 2 - 1) * env;
+        }
+      }
+      reverb = ctx.createConvolver();
+      reverb.buffer = ir;
+      revGain = ctx.createGain();
+      revGain.gain.value = 0.32;
+      reverb.connect(revGain);
+      revGain.connect(masterGain);
 
-                const { isSuccessful } = await staticrypt.handleDecryptionOfPage(password, isRememberChecked);
+      // 解錠音 mp3 を decode
+      try {
+        const bin = atob(KEY_CLOSE_B64);
+        const len = bin.length;
+        const arr = new Uint8Array(len);
+        for (let i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
+        ctx.decodeAudioData(arr.buffer.slice(0), function (buf) { keyCloseBuf = buf; }, function (e) { console.warn("keyclose decode failed", e); });
+      } catch (e) { console.warn("keyclose load failed", e); }
 
-                if (!isSuccessful) {
-                    alert(templateError);
-                }
-            });
-        </script>
-    </body>
+      return ctx;
+    }
+    function dest() { return masterGain; }
+    function wet() { return reverb; }
+    function resume() {
+      ensure();
+      if (ctx && ctx.state === "suspended") ctx.resume();
+    }
+    function setMuted(m) {
+      muted = !!m;
+      try { localStorage.setItem("nn_mute", muted ? "1" : "0"); } catch (e) {}
+    }
+    function isMuted() { return muted; }
+
+    // 拍子木: 高域 noise burst + band-pass (PIN1桁入力ごと)
+    function clack() {
+      if (muted) return;
+      const c = ensure(); if (!c) return;
+      const t = c.currentTime;
+      const len = Math.floor(c.sampleRate * 0.07);
+      const buf = c.createBuffer(1, len, c.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (c.sampleRate * 0.010));
+      }
+      const src = c.createBufferSource(); src.buffer = buf;
+      const bp = c.createBiquadFilter();
+      bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 5;
+      const hp = c.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 800;
+      const g = c.createGain(); g.gain.value = 0.42;
+      const send = c.createGain(); send.gain.value = 0.15;
+      src.connect(bp); bp.connect(hp); hp.connect(g); g.connect(dest());
+      g.connect(send); send.connect(wet());
+      src.start(t);
+    }
+
+    // 解錠音 (野中ご提供 mp3)
+    function keyClose() {
+      if (muted) return;
+      const c = ensure(); if (!c) return;
+      if (!keyCloseBuf) return; // decode 未完了時はスキップ
+      const src = c.createBufferSource();
+      src.buffer = keyCloseBuf;
+      const g = c.createGain();
+      g.gain.value = 0.85;
+      const send = c.createGain();
+      send.gain.value = 0.18;
+      src.connect(g); g.connect(dest());
+      g.connect(send); send.connect(wet());
+      src.start(c.currentTime);
+    }
+
+    // 鈴 (釣鐘 inharmonic + 打撃トランジェント + 空気tail + reverb) — fallback / 未使用
+    function bell() {
+      if (muted) return;
+      const c = ensure(); if (!c) return;
+      const t = c.currentTime;
+
+      // ① 打撃トランジェント (チン)
+      const stLen = Math.floor(c.sampleRate * 0.022);
+      const stBuf = c.createBuffer(1, stLen, c.sampleRate);
+      const sd = stBuf.getChannelData(0);
+      for (let i = 0; i < stLen; i++) {
+        sd[i] = (Math.random()*2-1) * Math.exp(-i / (c.sampleRate * 0.003));
+      }
+      const stSrc = c.createBufferSource(); stSrc.buffer = stBuf;
+      const stBP = c.createBiquadFilter();
+      stBP.type = "bandpass"; stBP.frequency.value = 5400; stBP.Q.value = 2.4;
+      const stHP = c.createBiquadFilter();
+      stHP.type = "highpass"; stHP.frequency.value = 2800;
+      const stG = c.createGain(); stG.gain.value = 0.22;
+      const stSend = c.createGain(); stSend.gain.value = 0.45;
+      stSrc.connect(stBP); stBP.connect(stHP); stHP.connect(stG);
+      stG.connect(dest()); stG.connect(stSend); stSend.connect(wet());
+      stSrc.start(t);
+
+      // ② Body: 非整数倍音 (釣鐘の典型 inharmonic series)
+      const fundamental = 1380;
+      const ratios  = [1.00, 2.42, 4.85, 7.13, 9.67, 12.85];
+      const amps    = [0.135, 0.095, 0.062, 0.040, 0.026, 0.017];
+      const decays  = [1.70, 1.45, 1.25, 1.08, 0.92, 0.78];
+      const detunes = [0,    +2,   -3,   +4,   -2,   +3]; // cents
+      ratios.forEach((r, i) => {
+        const o = c.createOscillator();
+        o.type = "sine";
+        o.frequency.value = fundamental * r;
+        o.detune.value = detunes[i];
+
+        // ゆらぎ LFO (chorus)
+        const lfo = c.createOscillator();
+        lfo.frequency.value = 3.8 + i * 0.55;
+        const lfoG = c.createGain();
+        lfoG.gain.value = 1.4 + i * 0.3;
+        lfo.connect(lfoG); lfoG.connect(o.detune);
+
+        const g = c.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(amps[i], t + 0.003 + i * 0.0007);
+        g.gain.exponentialRampToValueAtTime(0.00008, t + decays[i]);
+
+        const send = c.createGain(); send.gain.value = 0.55;
+
+        o.connect(g);
+        g.connect(dest());
+        g.connect(send); send.connect(wet());
+
+        o.start(t); o.stop(t + decays[i] + 0.05);
+        lfo.start(t); lfo.stop(t + decays[i]);
+      });
+
+      // ③ Air tail: 高域ノイズの長い shimmer
+      const tailLen = Math.floor(c.sampleRate * 1.2);
+      const tailBuf = c.createBuffer(1, tailLen, c.sampleRate);
+      const td = tailBuf.getChannelData(0);
+      for (let i = 0; i < tailLen; i++) {
+        td[i] = (Math.random()*2-1) * Math.exp(-i / (c.sampleRate * 0.55));
+      }
+      const tailSrc = c.createBufferSource(); tailSrc.buffer = tailBuf;
+      const tailHP = c.createBiquadFilter();
+      tailHP.type = "highpass"; tailHP.frequency.value = 4200;
+      const tailBP = c.createBiquadFilter();
+      tailBP.type = "bandpass"; tailBP.frequency.value = 5400; tailBP.Q.value = 1.5;
+      const tailG = c.createGain(); tailG.gain.value = 0.045;
+      const tailSend = c.createGain(); tailSend.gain.value = 0.8;
+      tailSrc.connect(tailHP); tailHP.connect(tailBP); tailBP.connect(tailG);
+      tailG.connect(dest()); tailG.connect(tailSend); tailSend.connect(wet());
+      tailSrc.start(t);
+    }
+
+    // 和太鼓 (バチ + 低域drop + ヘッド共鳴 + 皮ノイズ + reverb)
+    function taiko() {
+      if (muted) return;
+      const c = ensure(); if (!c) return;
+      const t = c.currentTime;
+
+      // バチ打撃 (mid-high transient)
+      const aLen = Math.floor(c.sampleRate * 0.022);
+      const aBuf = c.createBuffer(1, aLen, c.sampleRate);
+      const ad = aBuf.getChannelData(0);
+      for (let i = 0; i < aLen; i++) {
+        ad[i] = (Math.random()*2-1) * Math.exp(-i / (c.sampleRate * 0.004));
+      }
+      const aSrc = c.createBufferSource(); aSrc.buffer = aBuf;
+      const aBP = c.createBiquadFilter();
+      aBP.type = "bandpass"; aBP.frequency.value = 1900; aBP.Q.value = 1.4;
+      const aG = c.createGain(); aG.gain.value = 0.46;
+      const aSend = c.createGain(); aSend.gain.value = 0.25;
+      aSrc.connect(aBP); aBP.connect(aG);
+      aG.connect(dest()); aG.connect(aSend); aSend.connect(wet());
+      aSrc.start(t);
+
+      // 低域 fundamental (胴鳴り)
+      const o1 = c.createOscillator();
+      o1.type = "sine";
+      o1.frequency.setValueAtTime(178, t);
+      o1.frequency.exponentialRampToValueAtTime(42, t + 0.42);
+      const g1 = c.createGain();
+      g1.gain.setValueAtTime(0, t);
+      g1.gain.linearRampToValueAtTime(0.78, t + 0.007);
+      g1.gain.exponentialRampToValueAtTime(0.0008, t + 0.7);
+      const s1 = c.createGain(); s1.gain.value = 0.40;
+      o1.connect(g1); g1.connect(dest()); g1.connect(s1); s1.connect(wet());
+      o1.start(t); o1.stop(t + 0.75);
+
+      // 中域 ヘッド共鳴
+      const o2 = c.createOscillator();
+      o2.type = "sine";
+      o2.frequency.setValueAtTime(360, t);
+      o2.frequency.exponentialRampToValueAtTime(180, t + 0.25);
+      const g2 = c.createGain();
+      g2.gain.setValueAtTime(0, t);
+      g2.gain.linearRampToValueAtTime(0.20, t + 0.005);
+      g2.gain.exponentialRampToValueAtTime(0.0008, t + 0.32);
+      const s2 = c.createGain(); s2.gain.value = 0.35;
+      o2.connect(g2); g2.connect(dest()); g2.connect(s2); s2.connect(wet());
+      o2.start(t); o2.stop(t + 0.36);
+
+      // 皮ノイズ (skin texture)
+      const nLen = Math.floor(c.sampleRate * 0.22);
+      const nBuf = c.createBuffer(1, nLen, c.sampleRate);
+      const nd = nBuf.getChannelData(0);
+      for (let i = 0; i < nLen; i++) {
+        nd[i] = (Math.random()*2-1) * Math.exp(-i / (c.sampleRate * 0.045));
+      }
+      const nSrc = c.createBufferSource(); nSrc.buffer = nBuf;
+      const nLP = c.createBiquadFilter();
+      nLP.type = "lowpass"; nLP.frequency.value = 550;
+      const nG = c.createGain(); nG.gain.value = 0.34;
+      const nS = c.createGain(); nS.gain.value = 0.50;
+      nSrc.connect(nLP); nLP.connect(nG);
+      nG.connect(dest()); nG.connect(nS); nS.connect(wet());
+      nSrc.start(t);
+    }
+
+    // 失敗: 低い濁り音
+    function fail() {
+      if (muted) return;
+      const c = ensure(); if (!c) return;
+      const t = c.currentTime;
+      const o = c.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(210, t);
+      o.frequency.exponentialRampToValueAtTime(82, t + 0.3);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.20, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0006, t + 0.42);
+      const lp = c.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = 620; lp.Q.value = 0.8;
+      const send = c.createGain(); send.gain.value = 0.25;
+      o.connect(lp); lp.connect(g);
+      g.connect(dest()); g.connect(send); send.connect(wet());
+      o.start(t); o.stop(t + 0.48);
+    }
+
+    return { clack, bell, keyClose, taiko, fail, resume, ensure, setMuted, isMuted };
+  })();
+
+  // 初回ジェスチャでAudioContext起動
+  function nnUnlockAudio() {
+    nnAudio.resume();
+  }
+  ["pointerdown", "keydown", "touchstart"].forEach(ev => {
+    window.addEventListener(ev, nnUnlockAudio, { once: true, passive: true });
+  });
+
+  // ミュートトグル
+  const soundToggleEl = document.getElementById("nn-sound-toggle");
+  function syncMuteUI() {
+    if (!soundToggleEl) return;
+    soundToggleEl.classList.toggle("is-muted", nnAudio.isMuted());
+    soundToggleEl.setAttribute("title", nnAudio.isMuted() ? "音 オフ" : "音 オン");
+  }
+  syncMuteUI();
+  if (soundToggleEl) {
+    soundToggleEl.addEventListener("click", () => {
+      nnAudio.setMuted(!nnAudio.isMuted());
+      syncMuteUI();
+      if (!nnAudio.isMuted()) nnAudio.clack();
+    });
+  }
+
+  function renderCells() {
+    const v = inputEl.value || "";
+    cells.forEach((cell, i) => {
+      const ch = v[i] || "";
+      cell.classList.toggle("is-filled", !!ch);
+      cell.classList.remove("is-active");
+      if (ch) {
+        if (cell.firstChild && cell.firstChild.textContent === ch) return;
+        cell.innerHTML = '<span class="nn-digit">' + ch.replace(/[<>&]/g, "") + "</span>";
+      } else {
+        cell.textContent = "";
+      }
+    });
+    const idx = Math.min(v.length, cells.length - 1);
+    if (cells[idx] && document.activeElement === inputEl) {
+      cells[idx].classList.add("is-active");
+    }
+  }
+
+  function focusInput() {
+    inputEl.focus();
+    renderCells();
+  }
+
+  window.onload = async function () {
+    const { isSuccessful } = await staticrypt.handleDecryptOnLoad();
+    if (!isSuccessful) {
+      document.getElementById("staticrypt_loading").classList.add("hidden");
+      document.getElementById("staticrypt_content").classList.remove("hidden");
+      setTimeout(focusInput, 100);
+      if (isRememberEnabled) {
+        document.getElementById("staticrypt-remember-label").classList.remove("hidden");
+      }
+      attachParallax();
+    }
+  };
+
+  let lastInputLen = 0;
+  inputEl.addEventListener("input", () => {
+    const v = inputEl.value || "";
+    if (v.length > lastInputLen) {
+      nnAudio.clack();
+    }
+    lastInputLen = v.length;
+    renderCells();
+  });
+  inputEl.addEventListener("focus", renderCells);
+  inputEl.addEventListener("blur", () => cells.forEach(c => c.classList.remove("is-active")));
+  cellsEl && cellsEl.addEventListener("click", focusInput);
+
+  // パララックス: 「秘」+ 落款
+  function attachParallax() {
+    if (window.matchMedia("(hover: none)").matches) return;
+    const hero = document.querySelector(".nn-hero");
+    if (!hero) return;
+    let raf = null, tx = 0, ty = 0, cx = 0, cy = 0;
+    function onMove(e) {
+      const rx = (e.clientX / window.innerWidth - 0.5);
+      const ry = (e.clientY / window.innerHeight - 0.5);
+      tx = rx * 16; ty = ry * 12;
+      if (!raf) raf = requestAnimationFrame(loop);
+    }
+    function loop() {
+      cx += (tx - cx) * 0.08;
+      cy += (ty - cy) * 0.08;
+      hero.style.setProperty("--hm-px", cx.toFixed(2) + "px");
+      hero.style.setProperty("--hm-py", cy.toFixed(2) + "px");
+      if (Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05) {
+        raf = requestAnimationFrame(loop);
+      } else {
+        raf = null;
+      }
+    }
+    window.addEventListener("mousemove", onMove, { passive: true });
+  }
+
+  // 送信
+  document.getElementById("staticrypt-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const password = inputEl.value,
+      isRememberChecked = document.getElementById("staticrypt-remember").checked;
+
+    // 解錠ボタン押下 → 提供mp3 (鍵を閉じる音)
+    nnAudio.keyClose();
+
+    const { isSuccessful } = await staticrypt.handleDecryptionOfPage(password, isRememberChecked);
+
+    if (isSuccessful) {
+      const ov = document.getElementById("nn-stamp-overlay");
+      if (ov) ov.classList.add("is-fire");
+      // 落款の peak (nn-stamp-drop 35%地点 = 0.9s × 0.35 ≒ 315ms) でドン
+      setTimeout(() => nnAudio.taiko(), 300);
+    } else {
+      nnAudio.fail();
+      const form = document.getElementById("staticrypt-form");
+      form.classList.remove("nn-shake");
+      void form.offsetWidth;
+      form.classList.add("nn-shake");
+
+      const old = document.querySelector(".nn-err");
+      if (old) old.remove();
+      const errLabel = document.createElement("div");
+      errLabel.className = "nn-err";
+      errLabel.textContent = templateError;
+      form.appendChild(errLabel);
+
+      inputEl.value = "";
+      lastInputLen = 0;
+      renderCells();
+      focusInput();
+    }
+  });
+</script>
+</body>
 </html>
