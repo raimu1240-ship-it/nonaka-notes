@@ -226,8 +226,12 @@ function renderTray(){
   $("reset-btn").hidden=picks.length===0;
 }
 function updateSubmit(){
-  $("submit-btn").disabled=sent || !(picks.length===3 && $("voter-name").value.trim().length>0);
+  const left=3-picks.length, hasName=$("voter-name").value.trim().length>0;
+  const b=$("submit-btn");
+  b.disabled=sent || left>0 || !hasName;
+  b.textContent= left>0 ? "あと"+left+"店選んでね" : (!hasName ? "名前を入れてね" : "投票する");
 }
+
 function cleanName(n){return n.replace(/[\n\r]/g,"").trim().slice(0,20)}
 function showOverlay(state,text,sub){
   const ov=$("overlay"), ic=$("ov-icon");
@@ -241,7 +245,7 @@ function resetAll(){
 }
 function submitVote(){
   const name=cleanName($("voter-name").value); const ranks=picks.slice(); const msg=$("submit-msg");
-  if(!name||ranks.length!==3) return;
+  if(!name||ranks.length!==3||new Set(ranks).size!==3){ updateSubmit(); return; }
   sent=true; updateSubmit(); msg.textContent="";
   showOverlay("sending","送信中…","画面を閉じずに待つ");
   const FORM="https://docs.google.com/forms/d/e/1FAIpQLSd-i7fEBhU0wj5hVw3LZGiVgjSpaAUWS8RVvyad-8MVXusJEA/formResponse";
